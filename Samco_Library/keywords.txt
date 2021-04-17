@@ -8,7 +8,6 @@ testX	KEYWORD2
 testY	KEYWORD2
 X	KEYWORD2
 Y	KEYWORD2
-mapper	KEYWORD2
 requestPosition	KEYWORD2
 available	KEYWORD2
 testMedianX	KEYWORD2

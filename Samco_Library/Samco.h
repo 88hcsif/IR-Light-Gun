@@ -1,8 +1,9 @@
 /*!
- * @file Samco.h
- * @brief Samco Light Gun library for 4 LED setup
- * @n Header file for Samco Light Gun 4 LED setup
+ * Modified Samco Light Gun library for 4 LED setup
  *
+ * Copyright 2021 88hcsif
+ *
+ * Original copyright:
  * @copyright  [Samco](http://www.samco.co.nz), 2020
  * @copyright GNU Lesser General Public License
  *
@@ -11,22 +12,24 @@
  * @date  2020
  */
 
-#include "Arduino.h"
-
 #ifndef Samco_h
-  #define Samco_h
+#define Samco_h
+
+#include "stdbool.h"
+#include "DFRobotIRPosition.h"
+
+#define SAM_INVALID DFR_INVALID
 
 class Samco {
-  
-private:
 
+private:
   int positionXX[4];   ///< position x.
   int positionYY[4];   ///< position y.
 
   int positionX[4]; 
   int positionY[4];
 
-  int see[4];
+  int seen[4];
   int buff = 50;
 
   int medianY = 768 / 2;
@@ -46,23 +49,16 @@ private:
   int xx;
   int yy;
 
-  int i;  
-  
-  int start = 0;
+  bool start = false;
 
 public:
-
-void mapper(); 
-void begin(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, int cx, int cy);
-int testX(int index);  
-int testY(int index);
-int testMedianX();
-int testMedianY();
-int X();
-int Y();
-
- 
+  bool track(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, int cx, int cy);
+  int testX(int index);  
+  int testY(int index);
+  int testMedianX();
+  int testMedianY();
+  int X();
+  int Y();
 };
-
 
 #endif
