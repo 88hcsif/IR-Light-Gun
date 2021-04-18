@@ -1,14 +1,25 @@
-/*!
- * Modified DFRobot's Positioning ir camera
+/*
+ * Modified DFRobot's positioning ir camera library
  *
  * Copyright 2021 88hcsif
  *
- * Original copyright:
- * @copyright	[DFRobot](http://www.dfrobot.com), 2016
- * @copyright	GNU Lesser General Public License
+ * Derived from DFRobot's positioning ir camera library:
+ * Copyright: [DFRobot](http://www.dfrobot.com), 2016
+ * Author:    [Angelo](Angelo.qiao@dfrobot.com)
  *
- * @author [Angelo](Angelo.qiao@dfrobot.com)
- * @date  2016-02-01
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef DFRobotIRPosition_cpp

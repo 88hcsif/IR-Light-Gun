@@ -1,20 +1,31 @@
-/*!
+/*
  * Modified Samco Light Gun library for 4 LED setup
  *
  * Copyright 2021 88hcsif
  *
- * @copyright   Samco, https://github.com/samuelballantyne, April 2020
- * @copyright   GNU Lesser General Public License
+ * Derived from Samco Light Gun library for 4 LED setup:
+ * Copyright: [Samco](https://github.com/samuelballantyne), April 2020
+ * Author [Sam Ballantyne](samuelballantyne@hotmail.com)
  *
- * @author [Sam Ballantyne](samuelballantyne@hotmail.com)
- * @version  V1.0
- * @date  2020
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "Samco.h"
 #include "math.h"
 
-bool Samco::track(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, int cx, int cy) {
+bool Samco::track(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3) {
   // Remapping LED postions to use with library.
   positionXX[0] = x0;
   positionYY[0] = y0;
@@ -209,37 +220,17 @@ bool Samco::track(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3
       xDistBottom = xDistBottom;
     }
 
-    // Add tilt correction
-    xx = cx + cosf(angle * -1) * (medianX - cx) - sinf(angle * -1) * (medianY - cy);
-    yy = cy + sinf(angle * -1) * (medianX - cx) + cosf(angle * -1) * (medianY - cy);
-
     return true;
   }
   return false;
 }
 
-int Samco::testX(int index) { // used of trouble shooting sketch
+int Samco::getX(int index) {
   if (index < 0 || index > 3) return 0;
   return finalX[index];
 }
 
-int Samco::testY(int index) { // used of trouble shooting sketch
+int Samco::getY(int index) {
   if (index < 0 || index > 3) return 0;
   return finalY[index];
-}
-
-int Samco::testMedianX() { // used of trouble shooting sketch
-  return medianX;
-}
-
-int Samco::testMedianY() { // used of trouble shooting sketch
-  return medianY;
-}
-
-int Samco::X() { // Final Values
-  return xx;
-}
-
-int Samco::Y() { // Final Values
-  return yy;
 }

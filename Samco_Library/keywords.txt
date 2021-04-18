@@ -1,14 +1,3 @@
 # Datatypes
 Samco	KEYWORD1
 DFRobotIRPosition	KEYWORD1
-
-# Methods and Functions
-begin	KEYWORD2
-testX	KEYWORD2
-testY	KEYWORD2
-X	KEYWORD2
-Y	KEYWORD2
-requestPosition	KEYWORD2
-available	KEYWORD2
-testMedianX	KEYWORD2
-testMedianY	KEYWORD2
