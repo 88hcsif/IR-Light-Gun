@@ -35,6 +35,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+ 
+#ifndef TINYUSBABSMOUSEKEYBOARD_H_
+#define TINYUSBABSMOUSEKEYBOARD_H_
 
 #ifndef USE_TINYUSB
   //if not using TinyUSB then default to the standard Arduino routines.
@@ -164,3 +167,5 @@
   extern TinyKeyboard_ Keyboard;
 
 #endif
+
+#endif /* TINYUSBABSMOUSEKEYBOARD_H_ */

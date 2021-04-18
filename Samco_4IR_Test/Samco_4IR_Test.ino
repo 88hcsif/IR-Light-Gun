@@ -87,7 +87,7 @@ bool getEstimatePosition() {
       finalX[i] = mySamco.getX(i);
       finalY[i] = mySamco.getY(i);
     }
-    per.warp(finalX, finalY);
+    per.warp(finalX[0], finalY[0], finalX[1], finalY[1], finalX[2], finalY[2], finalX[3], finalY[3]);
     return true;
   } else {
     return false;

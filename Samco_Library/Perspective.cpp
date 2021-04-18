@@ -27,15 +27,11 @@
 #include "math.h"
 
 void computeSquareToQuad(
-  float* mat,
-  float x0,
-  float x1,
-  float x2,
-  float x3,
-  float y0,
-  float y1,
-  float y2,
-  float y3) {
+      float* mat,
+      float x0, float y0,
+      float x1, float y1,
+      float x2, float y2,
+      float x3, float y3) {
 
   float dx1 = x1 - x2;
   float dy1 = y1 - y2;
@@ -70,19 +66,14 @@ void computeSquareToQuad(
   mat[15] = 1.0f;
 }
 
-void computeQuadToSquare(float* mat, int* inX, int* inY) {
-  computeSquareToQuad(
-    mat,
-    float(inX[0]),
-    float(inX[1]),
-    float(inX[2]),
-    float(inX[3]),
-    float(inY[0]),
-    float(inY[1]),
-    float(inY[2]),
-    float(inY[3])
-  );
-  
+void computeQuadToSquare(
+    float* mat,
+    float x0, float y0,
+    float x1, float y1,
+    float x2, float y2,
+    float x3, float y3) {
+  computeSquareToQuad(mat, x0, y0, x1, y1, x2, y2, x3, y3);
+
   float a = mat[ 0];
   float d = mat[ 1];
   float g = mat[ 3];
@@ -91,15 +82,6 @@ void computeQuadToSquare(float* mat, int* inX, int* inY) {
   float h = mat[ 7];
   float c = mat[12];
   float f = mat[13];
-
-  float x0 = float(inX[0]);
-  float x1 = float(inX[1]);
-  float x2 = float(inX[2]);
-  float x3 = float(inX[3]);
-  float y0 = float(inY[0]);
-  float y1 = float(inY[1]);
-  float y2 = float(inY[2]);
-  float y3 = float(inY[3]);
 
   float A =     e - f * h;
   float B = c * h - b;
@@ -146,15 +128,15 @@ void multMats(float* a, float* b, float* res) {
   }
 }
 
-void Perspective::warp(int* inX, int* inY) {
+void Perspective::warp(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3) {
   if (!init) {
-    float x0 = (monitorWidth - sensorBarLength) / 2.0f;
-    float x1 = x0 + sensorBarLength;
-    float y2 = monitorHeight;
-    computeSquareToQuad(dstmatrix, x0, x1, x0, x1, 0.0f, 0.0f, y2, y2);
+    float dx0 = (monitorWidth - sensorBarLength) / 2.0f;
+    float dx1 = dx0 + sensorBarLength;
+    float dy2 = monitorHeight;
+    computeSquareToQuad(dstmatrix, dx0, 0.0f, dx1, 0.0f, dx0, dy2, dx1, dy2);
     init = true;
   }
-  computeQuadToSquare(srcmatrix, inX, inY);
+  computeQuadToSquare(srcmatrix, float(x0), float(y0), float(x1), float(y1), float(x2), float(y2), float(x3), float(y3));
   multMats(srcmatrix, dstmatrix, warpmatrix);
   float r0 = (srcX * warpmatrix[0] + srcY * warpmatrix[4] + warpmatrix[12]);
   float r1 = (srcX * warpmatrix[1] + srcY * warpmatrix[5] + warpmatrix[13]);

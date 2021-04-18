@@ -104,6 +104,9 @@ bool guncond_control_request(uint8_t rhport, tusb_control_request_t const * requ
   (void) request;
 
   _guncond_itf.ready = true;
+  // Very important to return false here.
+  // The PS2 will send a Set Interface command and it seems to expect it to fail.
+  // USBD Setup Received 01 0B 00 00 00 00 00 00
   return false;
 }
 

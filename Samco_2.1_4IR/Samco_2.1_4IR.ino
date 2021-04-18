@@ -1,7 +1,11 @@
 /*
  * Samco 2.1
+ * Pull the trigger while powering up the lightgun to enter Guncon mode.
  *
  * Copyright 2021 88hcsif
+ *
+ * Main function taken from Adafruit_TinyUSB_SAMD:
+ * Copyright (c) 2019, hathach for Adafruit
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +24,6 @@
 
 #include <Arduino.h>
 #include <DFRobotIRPosition.h>
-#include <Guncon2Interface.h>
 #include <Perspective.h>
 #include <Samco.h>
 #include <TinyUSB_AbsMouse_and_Keyboard.h>
@@ -28,12 +31,6 @@
 DFRobotIRPosition myDFRobotIRPosition;
 Perspective per;
 Samco mySamco;
-
-int rawX[4];
-int rawY[4];
-
-int finalX[4];
-int finalY[4];
 
 #define DEBOUNCE_DELAY 5
 
@@ -55,6 +52,18 @@ int keyMap[] = {
   -MOUSE_RIGHT,    // RELOAD / C
   -MOUSE_RIGHT     // PEDAL
 };
+
+#define DEBUG_FPS 0
+#if DEBUG_FPS
+#define FPS_CHECK 2000
+int count = 0;
+unsigned long lastFps = 0;
+#endif
+
+#define GUNCON_SUPPORT 1 && (defined USE_TINYUSB)
+#if GUNCON_SUPPORT
+#include <Guncon2Interface.h>
+
 uint16_t gunconMap[] = {
   GUNCON_TRIGGER,
   GUNCON_DPAD_UP,
@@ -69,138 +78,8 @@ uint16_t gunconMap[] = {
   GUNCON_C
 };
 
-#define DEBUG_FPS 1
-#if DEBUG_FPS
-#define FPS_CHECK 2000
-int count = 0;
-unsigned long lastFps = 0;
-#endif
-
-#define GUNCON_SUPPORT 1
-#if (defined USE_TINYUSB) && GUNCON_SUPPORT
 bool isGuncon = false;
 int gunconPin = 7; // TRIGGER
-
-bool isOn = false;
-void flip_led(void) {
-  if (!isOn) {
-    digitalWrite(13, HIGH);
-    isOn = true;
-  } else {
-    digitalWrite(13, LOW);
-    isOn = false;
-  }
-}
-
-#if CFG_TUSB_DEBUG
-  #include <SPI.h>
-  #include <SdFat.h>
-  #include <Adafruit_SPIFlash.h>
-  #include "Adafruit_TinyUSB.h"
-
-  #if defined(EXTERNAL_FLASH_USE_QSPI)
-    Adafruit_FlashTransport_QSPI flashTransport;
-
-  #elif defined(EXTERNAL_FLASH_USE_SPI)
-    Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS, EXTERNAL_FLASH_USE_SPI);
-
-  #else
-    #error No QSPI/SPI flash are defined on your board variant.h !
-  #endif
-
-  Adafruit_SPIFlash flash(&flashTransport);
-
-  // file system object from SdFat
-  FatFileSystem fatfs;
-
-  // Configuration for the datalogging file:
-  #define FILE_NAME "log.txt"
-
-  // USB Mass Storage object
-  Adafruit_USBD_MSC usb_msc;
-
-  // Callback invoked when received READ10 command.
-  int32_t msc_read_cb (uint32_t lba, void* buffer, uint32_t bufsize) {
-    return flash.readBlocks(lba, (uint8_t*) buffer, bufsize/512) ? bufsize : -1;
-  }
-
-  // Callback invoked when received WRITE10 command.
-  int32_t msc_write_cb (uint32_t lba, uint8_t* buffer, uint32_t bufsize) {
-    return flash.writeBlocks(lba, buffer, bufsize/512) ? bufsize : -1;
-  }
-
-  // Callback invoked when WRITE10 command is completed
-  void msc_flush_cb (void) {
-    flash.syncBlocks();
-    fatfs.cacheClear();
-  }
-
-  void print_to_file(const char* format, ...) {
-    char buf[PRINTF_BUF];
-    va_list ap;
-    va_start(ap, format);
-    int n = vsnprintf(buf, sizeof(buf), format, ap);
-    if (n >= sizeof(buf)) n = sizeof(buf) - 1;
-    File dataFile = fatfs.open(FILE_NAME, FILE_WRITE);
-    if (dataFile) {
-      dataFile.write(buf);
-      dataFile.close();
-      flash.syncBlocks();
-      fatfs.cacheClear();
-    }
-    va_end(ap);
-  }
-
-  #define CACHE_SIZE 4000
-  #define CACHE_FLUSH 5000
-  // #define MAX_FLUSH_COUNT 4
-  char cache_buf[CACHE_SIZE];
-  int cache_len = 0;
-  unsigned long cache_flush = 0;
-  int flush_count = 0;
-  int print_count = 0;
-  void flush_cache(void) {
-    // flip_led();
-    // if (flush_count >= MAX_FLUSH_COUNT) {
-    //   return;
-    // }
-    if (cache_len > 0) {
-      File dataFile = fatfs.open(FILE_NAME, FILE_WRITE);
-      if (dataFile) {
-        dataFile.print(flush_count);
-        dataFile.print(" ");
-        dataFile.print(print_count);
-        dataFile.println();
-        dataFile.write(cache_buf, cache_len);
-        dataFile.close();
-        flash.syncBlocks();
-        fatfs.cacheClear();
-      }
-      cache_len = 0;
-      cache_flush = millis();
-      flush_count++;
-    }
-  }
-  extern "C" int serial1_printf(const char* format, ...) {
-    if (isGuncon) {
-      char buf[PRINTF_BUF];
-      va_list ap;
-      va_start(ap, format);
-      int n = vsnprintf(buf, PRINTF_BUF, format, ap);
-      if (n >= sizeof(buf)) n = PRINTF_BUF - 1;
-      memcpy(&cache_buf[cache_len], buf, n);
-      cache_len += n;
-      va_end(ap);
-      print_count++;
-      if ((cache_len > CACHE_SIZE - PRINTF_BUF) ||
-          (millis() - cache_flush > CACHE_FLUSH)) {
-        flush_cache();
-      }
-      return n;
-    }
-    return 0;
-  }
-#endif
 
 // Weak empty variant initialization function.
 // May be redefined by variant files.
@@ -211,7 +90,10 @@ void initVariant() { }
 extern "C" void __libc_init_array(void);
 
 /*
- * \brief Main entry point of Arduino application
+ * Main entry point of Arduino application
+ * Need to redefine the main functionto stop the Adafruit implementantion from
+ * adding a serial interface to the USB device. Also it is better to add USB
+ * interfaces before we allow the USB host to poll.
  */
 int main( void ) {
   init();
@@ -222,34 +104,15 @@ int main( void ) {
   pinMode(gunconPin, INPUT_PULLUP);
   isGuncon = (digitalRead(gunconPin) == LOW);
 
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
-
   if (!isGuncon) {
     // Adafruit_TinyUSB_Core_init();
     Serial.setStringDescriptor("TinyUSB Serial");
     USBDevice.addInterface(Serial);
     USBDevice.setID(USB_VID, USB_PID);
     USBDevice.begin();
-#if CFG_TUSB_DEBUG
-    flash.begin();
-    usb_msc.setID("Adafruit", "External Flash", "1.0");
-    usb_msc.setReadWriteCallback(msc_read_cb, msc_write_cb, msc_flush_cb);
-    usb_msc.setCapacity(flash.size()/512, 512);
-    usb_msc.setUnitReady(true);
-    usb_msc.begin();
-    fatfs.begin(&flash);
-    print_to_file("NOT GUNCON\n");
-#endif
   } else {
-#if CFG_TUSB_DEBUG
-    flash.begin();
-    fatfs.begin(&flash);
-    print_to_file("GUNCON\n");
-#endif
     Guncon.begin();
     USBDevice.setID(0x0b9a, 0x016a);
-    // USBDevice.setVersion(0x0100);
     USBDevice.begin();
   }
 
@@ -333,7 +196,7 @@ static void usb_hardware_init(void)
 
 #else
 const bool isGuncon = false;
-#endif
+#endif /* (defined USE_TINYUSB) && GUNCON_SUPPORT */
 
 void setup() {
   if (!isGuncon) {
@@ -346,8 +209,9 @@ void setup() {
     Serial.begin(9600);
 #endif
   } else {
-    // while(!USBDevice.mounted()) delay(1);
+#if GUNCON_SUPPORT
     Guncon.init(1000, 1000, false);
+#endif
   }
 
   for (int i = 0; i < 11; i++) {
@@ -360,24 +224,30 @@ void setup() {
   myDFRobotIRPosition.begin();
 }
 
-#define BLINK_PERIOD 3000
-unsigned long last_blink = 0;
 void loop() {
-  if (millis() - last_blink > BLINK_PERIOD) {
-    flip_led();
-    last_blink = millis();
-  }
   bool mouseChanged = false;
   bool keyboardChanged = false;
   bool gunconChanged = false;
-  if (getRawPosition()) {
-    if (getEstimatePosition()) {
+
+  myDFRobotIRPosition.requestPosition();
+  if (myDFRobotIRPosition.readPosition()) {
+    if (mySamco.track(
+          myDFRobotIRPosition.getX(0), myDFRobotIRPosition.getY(0),
+          myDFRobotIRPosition.getX(1), myDFRobotIRPosition.getY(1),
+          myDFRobotIRPosition.getX(2), myDFRobotIRPosition.getY(2),
+          myDFRobotIRPosition.getX(3), myDFRobotIRPosition.getY(3))) {
+      per.warp(
+          mySamco.getX(0), mySamco.getY(0),
+          mySamco.getX(1), mySamco.getY(1),
+          mySamco.getX(2), mySamco.getY(2),
+          mySamco.getX(3), mySamco.getY(3));
       if (!isGuncon) {
         if (0 <= per.getX() && per.getX() <= 1000 && 0 <= per.getY() && per.getY() <= 1000) {
           mouseChanged = true;
           AbsMouse.move(per.getX(), per.getY());
         }
       } else {
+#if GUNCON_SUPPORT
         int x = per.getX();
         int y = per.getY();
         if (0 <= per.getX() && per.getX() <= 1000 && 0 <= per.getY() && per.getY() <= 1000) {
@@ -385,6 +255,7 @@ void loop() {
         } else {
           Guncon.reset();
         }
+#endif
       }
     }
   }
@@ -406,6 +277,7 @@ void loop() {
               AbsMouse.release(-keyMap[i]);
             }
           } else {
+            // TODO: Investigate why keyboard only works when mouse not active (seen with TinyUSB)
             keyboardChanged = true;
             if (currState[i] == LOW) {
               Keyboard.press(keyMap[i]);
@@ -414,12 +286,14 @@ void loop() {
             }
           }
         } else {
+#if GUNCON_SUPPORT
           gunconChanged = true;
           if (currState[i] == LOW) {
             Guncon.press(gunconMap[i]);
           } else {
             Guncon.release(gunconMap[i]);
           }
+#endif
         }
         lastReportedState[i] = currState[i];
       }
@@ -435,11 +309,8 @@ void loop() {
 #endif
   }
   if (isGuncon) {
+#if GUNCON_SUPPORT
     Guncon.report();
-#if CFG_TUSB_DEBUG
-    if (millis() - cache_flush > CACHE_FLUSH) {
-      flush_cache();
-    }
 #endif
   }
 #if DEBUG_FPS
@@ -453,30 +324,3 @@ void loop() {
   }
 #endif
 }
-
-bool getRawPosition() {
-  myDFRobotIRPosition.requestPosition();
-  if (myDFRobotIRPosition.readPosition()) {
-    for (int i = 0; i < 4; i++) {
-      rawX[i] = myDFRobotIRPosition.getX(i);
-      rawY[i] = myDFRobotIRPosition.getY(i);
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool getEstimatePosition() {
-  if (mySamco.track(rawX[0], rawY[0], rawX[1], rawY[1], rawX[2], rawY[2], rawX[3], rawY[3])) {
-    for (int i = 0; i < 4; i++) {
-      finalX[i] = mySamco.getX(i);
-      finalY[i] = mySamco.getY(i);
-    }
-    per.warp(finalX, finalY);
-    return true;
-  } else {
-    return false;
-  }
-}
-

@@ -1,3 +1,0 @@
-# Datatypes
-Samco	KEYWORD1
-DFRobotIRPosition	KEYWORD1

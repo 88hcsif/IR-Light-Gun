@@ -496,4 +496,4 @@
 
   TinyKeyboard_ Keyboard; // create an instance of the Keyboard object
 
-#endif
+#endif /* USE_TINYUSB */
